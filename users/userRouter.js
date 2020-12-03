@@ -3,32 +3,82 @@ const Users = require("./userDb");
 const Posts = require("../posts/postDb");
 const router = express.Router();
 
-router.post("/", (req, res) => {
-  // do your magic!
+router.post("/", validateUser, (req, res) => {
+  Users.insert(req.body)
+  .then(user => {
+    res.status(201).json(user)
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({message: 'could not add user.' + err.message})
+  })
 });
 
-router.post("/:id/posts", (req, res) => {
-  // do your magic!
+router.post("/:id/posts", validatePost, validateUserId, (req, res) => {
+  const newPost = {...req.body, user_id:req.params.id}
+
+  Posts.insert(newPost)
+  .then(post => {
+    res.status(210).json(post)
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({error: err.message})
+  })
 });
 
 router.get("/", (req, res) => {
-  // do your magic!
+  Users.get(req.query)
+  .then(users => {
+    res.status(200).json(users)
+  })
+  .catch(err => {
+    res.st
 });
 
-router.get("/:id", (req, res) => {
-  // do your magic!
+router.get("/:id", validateUserId, (req, res) => {
+  const {id} = req.params
+  Users.getById(id)
+  .then(aUser => {
+    res.status(200).json(aUser)
+    .catch(err =>{
+      console.log(err)
+      res.status(500).json({error: err.message})
+    })
 });
 
-router.get("/:id/posts", (req, res) => {
-  // do your magic!
+router.get("/:id/posts", validateUserId, (req, res) => {
+  const { id } = req.params
+  Users.getUserPosts(id)
+  .then(posts => {
+    res.status(200).json(posts)
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({error: err.message})
+  })
 });
 
-router.delete("/:id", (req, res) => {
-  // do your magic!
+router.delete("/:id", validateUserId, (req, res) => {
+  Users.remove(req.params.id)
+  .then(test => {
+    res.status(200).json({message: 'this user has gone byebye'})
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({error: err.message})
+  })
 });
 
-router.put("/:id", (req, res) => {
-  // do your magic!
+router.put("/:id", validateUserId, (req, res) => {
+  Users.update(req.params.id, req.body)
+  .then(newInfo => {
+    res.status(200).json(newInfo)
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({error: err.message})
+  })
 });
 
 //custom middleware
@@ -48,7 +98,7 @@ function validateUserId(req, res, next) {
     .catch((err) => {
       res.status(500).json({ message: err.message });
     });
-}
+};
 
 function validateUser(req, res, next) {
   if (!req.body.name) {
@@ -56,7 +106,7 @@ function validateUser(req, res, next) {
   } else {
     next();
   }
-}
+};
 
 function validatePost(req, res, next) {
   if (!req.body) {
@@ -66,6 +116,6 @@ function validatePost(req, res, next) {
   } else {
     next();
   }
-}
+};
 
 module.exports = router;
